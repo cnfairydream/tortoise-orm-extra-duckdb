@@ -7,7 +7,8 @@ readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
-    "tortoise-orm"
+    "aio-duckdb",
+    "tortoise-orm",
 ]
 
 [build-system]
