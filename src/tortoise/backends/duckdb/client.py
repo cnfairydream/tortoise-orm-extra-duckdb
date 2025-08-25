@@ -134,20 +134,21 @@ class DuckDBClient(BaseDBAsyncClient):
     ) -> tuple[int, Sequence[dict]]:
         async with self.acquire_connection() as connection:
             self.log.debug("%s: %s", query, values)
-            await connection.execute(query, values)
-            rows = await connection.fetchall()
-            if query.startswith("UPDATE") or query.startswith("DELETE") or query.startswith("INSERT"):
-                return int(rows[0][0]), []
-
-            return len(rows), rows
+            async with connection.cursor() as cursor:
+                await cursor.execute(query, values)
+                rows = await cursor.fetchall()
+                if query.startswith("UPDATE") or query.startswith("DELETE") or query.startswith("INSERT"):
+                    return int(rows[0][0]), []
+                return len(rows), rows
 
     @translate_exceptions
     async def execute_query_dict(self, query: str, values: list | None = None) -> list[dict]:
         async with self.acquire_connection() as connection:
             self.log.debug("%s: %s", query, values)
-            await connection.execute(query, values)
-            df = await connection.fetchdf()
-            return df.to_dict(orient="records")
+            async with connection.cursor() as cursor:
+                await cursor.execute(query, values)
+                df = await cursor.fetchdf()
+                return df.to_dict(orient="records")
 
 
 class DuckDBTransactionContext(TransactionContext):
