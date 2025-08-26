@@ -155,19 +155,12 @@ class DuckDBClient(BaseDBAsyncClient):
             self.log.debug("%s: %s", query, values)
             async with connection.cursor() as cursor:
                 await cursor.execute(query, values)
-                rows = await cursor.fetchall()
-                if query.startswith("UPDATE") or query.startswith("DELETE") or query.startswith("INSERT"):
-                    return int(rows[0][0]), []
-                return len(rows), rows
+                pl = await cursor.pl()
+                return pl.shape[0], pl.to_dicts()
 
-    @translate_exceptions
     async def execute_query_dict(self, query: str, values: list | None = None) -> list[dict]:
-        async with self.acquire_connection() as connection:
-            self.log.debug("%s: %s", query, values)
-            async with connection.cursor() as cursor:
-                await cursor.execute(query, values)
-                df = await cursor.pl()
-                return df.to_dicts()
+        _, rows = await self.execute_query(query, values)
+        return rows
 
     @translate_exceptions
     async def execute_script(self, query: str) -> None:
