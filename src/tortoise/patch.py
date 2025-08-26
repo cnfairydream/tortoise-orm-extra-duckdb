@@ -145,10 +145,8 @@ def patch_tortoise_backends():
         "engine": "tortoise.backends.duckdb",
         "skip_first_char": False,
         "vmap": {"path": "file_path"},
-        "defaults": {"enable_logging": True, "logging_storage": "stdout"},
-        "cast": {
-            "enable_logging": bool,
-        },
+        "defaults": {},
+        "cast": {},
     }
 
     def expand_db_url(db_url: str, testing: bool = False) -> dict:

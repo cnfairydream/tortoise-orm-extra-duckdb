@@ -5,6 +5,7 @@ import uuid
 from tortoise import Model
 from tortoise.backends.base.executor import BaseExecutor
 from tortoise.contrib.duckdb.regex import duckdb_posix_regex
+from tortoise.fields import BigIntField, IntField, SmallIntField
 from tortoise.filters import posix_regex
 
 
@@ -15,9 +16,10 @@ class DuckDBExecutor(BaseExecutor):
         posix_regex: duckdb_posix_regex,
     }
 
-    async def _process_insert_result(self, instance: Model, results: dict | None) -> None:
-        if results:
-            generated_fields = self.model._meta.generated_db_fields
-            db_projection = instance._meta.fields_db_projection_reverse
-            for key, val in zip(generated_fields, results):
-                setattr(instance, db_projection[key], val)
+    async def _process_insert_result(self, instance: Model, results: int) -> None:
+        pk_field_object = self.model._meta.pk
+        if (
+                isinstance(pk_field_object, (SmallIntField, IntField, BigIntField))
+                and pk_field_object.generated
+        ):
+            instance.pk = results
