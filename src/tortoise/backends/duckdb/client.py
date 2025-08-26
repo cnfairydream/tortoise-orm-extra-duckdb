@@ -73,6 +73,7 @@ class DuckDBClient(BaseDBAsyncClient):
     async def create_connection(self, with_db: bool) -> None:
         if not self._connection:  # pragma: no branch
             self._connection = AsyncConnection(self.filename)
+            await self._connection.agent.start()
             for pragma, val in self.pragmas.items():
                 cursor = await self._connection.execute(f"PRAGMA {pragma}={val}")
                 await cursor.close()
@@ -86,6 +87,7 @@ class DuckDBClient(BaseDBAsyncClient):
     async def close(self) -> None:
         if self._connection:
             await self._connection.close()
+            await self._connection.agent.stop()
             self.log.debug(
                 "Closed connection %s with params: filename=%s %s",
                 self._connection,
@@ -147,8 +149,8 @@ class DuckDBClient(BaseDBAsyncClient):
             self.log.debug("%s: %s", query, values)
             async with connection.cursor() as cursor:
                 await cursor.execute(query, values)
-                df = await cursor.fetchdf()
-                return df.to_dict(orient="records")
+                df = await cursor.pl()
+                return df.to_dicts()
 
 
 class DuckDBTransactionContext(TransactionContext):
