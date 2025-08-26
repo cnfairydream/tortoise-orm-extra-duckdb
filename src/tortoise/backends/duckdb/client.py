@@ -217,10 +217,8 @@ class DuckDBTransactionWrapper(DuckDBClient, TransactionalDBClient):
         self.capabilities = connection.capabilities
         self.connection_name = connection.connection_name
         self._connection: AsyncConnection = cast(AsyncConnection, connection._connection)
-        self._lock = asyncio.Lock()
         self.log = connection.log
         self._finalized = False
-        self.fetch_inserted = connection.fetch_inserted
         self._parent = connection
 
     def _in_transaction(self) -> TransactionContext:
