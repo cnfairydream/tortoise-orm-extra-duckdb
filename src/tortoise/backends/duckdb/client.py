@@ -59,24 +59,41 @@ class DuckDBClient(BaseDBAsyncClient):
     def __init__(self, file_path: str, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.filename = file_path
-
         self.pragmas = kwargs.copy()
-        self.pragmas.pop("connection_name", None)
-        self.pragmas.pop("fetch_inserted", None)
-        self.pragmas.setdefault("journal_mode", "WAL")
-        self.pragmas.setdefault("journal_size_limit", 16384)
-        self.pragmas.setdefault("foreign_keys", "ON")
-
         self._connection: AsyncConnection | None = None
         self._lock = asyncio.Lock()
+
+    async def _load_config(self):
+        async with self._connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM duckdb_settings()")
+            rows = await cursor.fetchall()
+            self.config = {row[0]: row[3] for row in rows}
+
+    async def _apply_config(self):
+        valid_pragmas = {}
+        for pragma, val in self.pragmas.items():
+            if pragma in self.config:
+                match self.config[pragma]:
+                    case "BIGINT" | "UBIGINT":
+                        val = int(val)
+                    case "BOOLEAN":
+                        val = bool(val)
+                    case "DOUBLE":
+                        val = float(val)
+                    case "VARCHAR":
+                        val = "'" + str(val) + "'"
+                    case "VARCHAR[]":
+                        val = [str(v) for v in val]
+                valid_pragmas[pragma] = val
+                await self._connection.execute(f"SET {pragma} = {val}")
+        self.pragmas = valid_pragmas
 
     async def create_connection(self, with_db: bool) -> None:
         if not self._connection:  # pragma: no branch
             self._connection = AsyncConnection(self.filename)
             await self._connection.agent.start()
-            for pragma, val in self.pragmas.items():
-                cursor = await self._connection.execute(f"PRAGMA {pragma}={val}")
-                await cursor.close()
+            await self._load_config()
+            await self._apply_config()
             self.log.debug(
                 "Created connection %s with params: filename=%s %s",
                 self._connection,
@@ -151,6 +168,12 @@ class DuckDBClient(BaseDBAsyncClient):
                 await cursor.execute(query, values)
                 df = await cursor.pl()
                 return df.to_dicts()
+
+    @translate_exceptions
+    async def execute_script(self, query: str) -> None:
+        async with self.acquire_connection() as connection:
+            self.log.debug(query)
+            await connection.execute(query)
 
 
 class DuckDBTransactionContext(TransactionContext):
