@@ -4,10 +4,11 @@ version = "2025.8.25"
 description = "Tortoise ORM backend for DuckDB"
 authors = [{ name = "fairydream", email = "cn.fairydream@outlook.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
+license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.11"
+requires-python = ">=3.11, <4.0"
 dependencies = [
-    "aio-duckdb",
+    "aioduck",
     "tortoise-orm",
 ]
 
@@ -17,3 +18,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.urls]
+Homepage = "https://github.com/cnfairydream/aioduck"
+Repository = "https://github.com/cnfairydream/aioduck"
