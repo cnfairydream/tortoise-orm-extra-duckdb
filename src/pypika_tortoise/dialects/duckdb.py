@@ -9,7 +9,7 @@ from pypika_tortoise.queries import Query, QueryBuilder
 
 class DuckDBQuery(Query):
     """
-    Defines a query class for use with Microsoft SQL Server.
+    Defines a query class for use with DuckDB Server.
     """
 
     SQL_CONTEXT = DEFAULT_SQL_CONTEXT.copy(dialect=Dialects.DUCKDB, alias_quote_char='"')
