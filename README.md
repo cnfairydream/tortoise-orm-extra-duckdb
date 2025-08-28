@@ -1,4 +1,4 @@
-# tortoise-orm-extra-duckdb: Tortoise ORM backend for DuckDB
+# Tortoise ORM backend for DuckDB
 
 This integration allows you to use asyncio duckdb APIs with Tortoise ORM.
 
