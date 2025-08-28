@@ -8,7 +8,7 @@ from functools import wraps
 from typing import Any, TypeVar, cast
 
 import duckdb
-from aio_duckdb import AsyncConnection
+from aioduck import AsyncConnection
 from pypika_tortoise.dialects.duckdb import DuckDBQuery
 from tortoise.backends.base.client import (
     BaseDBAsyncClient,
